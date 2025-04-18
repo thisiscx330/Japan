@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="icon" href= "favicon.ico" type="image/x-icon">
   <title>日幣 ⇄ 台幣 換算器</title>
   <style>
     body {
@@ -11,13 +10,66 @@
       margin: auto;
       font-family: sans-serif;
       padding: 1rem;
+      background-color: #83b1c9;
     }
     select, input, button {
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    select, input {
       width: 100%;
       padding: 0.5rem;
       margin: 0.5rem 0;
-      font-size: 1rem;
-      box-sizing: border-box;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+    #btn {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      background: #2196f3;
+      color: #fff;
+    }
+    .rate-line {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.5rem 0;
+    }
+    .rate-line input {
+      width: 10ch;
+      padding: 0.5rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    /* 數字按鈕鍵盤 */
+    .num-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.25rem;
+      margin: 0.5rem 0;
+    }
+    .num-pad .num-btn {
+      padding: 0.75rem;
+      font-size: 1.25rem;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      color: #333;
+      text-align: center;
+    }
+    .num-pad #clear-btn {
+      padding: 0.75rem;
+      font-size: 1.25rem;
+      background: #f66;
+      color: #fff;
     }
     #result {
       margin-top: 1rem;
@@ -27,66 +79,104 @@
   </style>
 </head>
 <body>
-<body bgcolor="#83b1c9">
   <h2>日幣 ⇄ 台幣 換算器</h2>
+
+  <div class="rate-line">
+    <span>匯率：</span>
+    <input
+      type="number"
+      id="rate"
+      value="0.2292"
+      step="0.0001"
+      min="0.0001"
+    />
+  </div>
 
   <select id="mode">
     <option value="j2t">日幣 → 台幣</option>
     <option value="t2j">台幣 → 日幣</option>
   </select>
 
-  <input type="text" id="amount" placeholder="輸入金額" />
+  <input type="text" id="amount" placeholder="" />
+
+  <!-- 0–9 數字按鈕鍵盤，最下排改成 .  0  清除 -->
+  <div class="num-pad">
+    <button class="num-btn">1</button>
+    <button class="num-btn">2</button>
+    <button class="num-btn">3</button>
+    <button class="num-btn">4</button>
+    <button class="num-btn">5</button>
+    <button class="num-btn">6</button>
+    <button class="num-btn">7</button>
+    <button class="num-btn">8</button>
+    <button class="num-btn">9</button>
+    <button class="num-btn">.</button>
+    <button class="num-btn">0</button>
+    <button id="clear-btn">清除</button>
+  </div>
 
   <button id="btn">換算</button>
-  <h3>使用匯率：0.2292</h3>
 
   <p id="result"></p>
 
   <script>
-    const rate = 0.2292; // 1 JPY = 0.2292 TWD
-    const modeEl = document.getElementById('mode');
-    const amtEl  = document.getElementById('amount');
-    const resEl  = document.getElementById('result');
+    const modeEl   = document.getElementById('mode');
+    const amtEl    = document.getElementById('amount');
+    const rateEl   = document.getElementById('rate');
+    const resEl    = document.getElementById('result');
+    const numBtns  = document.querySelectorAll('.num-btn');
+    const clearBtn = document.getElementById('clear-btn');
 
-    // 取得目前前綴文字：日幣 或 台幣
-    function getPrefix() {
-      return modeEl.value === 'j2t' ? '日幣' : '台幣';
+    function updatePlaceholder() {
+      amtEl.placeholder = modeEl.value === 'j2t' ? '輸入日幣' : '輸入台幣';
     }
+    updatePlaceholder();
+    modeEl.addEventListener('change', () => {
+      amtEl.value = '';
+      resEl.textContent = '';
+      updatePlaceholder();
+    });
 
-    // 當輸入框內容改變，就重寫 value，讓它永遠是「前綴＋純數字」
     amtEl.addEventListener('input', () => {
-      const prefix = getPrefix();
-      // 從 value 裡面取出所有數字跟小數點
+      const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
       const digits = amtEl.value.replace(/[^0-9.]/g, '');
       amtEl.value = prefix + digits;
     });
 
-    // 當轉換模式改變時，清空輸入與結果，並更新前綴
-    modeEl.addEventListener('change', () => {
+    numBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const char = btn.textContent;
+        let raw = amtEl.value.replace(/[^0-9.]/g, '');
+        if (char === '.' && raw.includes('.')) return;
+        raw += char;
+        const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
+        amtEl.value = prefix + raw;
+      });
+    });
+    
+    clearBtn.addEventListener('click', () => {
       amtEl.value = '';
       resEl.textContent = '';
-      amtEl.placeholder = '輸入金額';
     });
 
     document.getElementById('btn').addEventListener('click', () => {
+      const rate = parseFloat(rateEl.value);
+      if (isNaN(rate) || rate <= 0) {
+        return alert('請輸入有效匯率');
+      }
       const raw = amtEl.value.replace(/[^0-9.]/g, '');
       const amt = parseFloat(raw);
       if (isNaN(amt)) {
-        return alert('請輸入有效數字');
+        return alert('請輸入有效金額');
       }
-
       let result, unit;
       if (modeEl.value === 'j2t') {
-        // 日幣 → 台幣
         result = amt * rate;
-        unit = '台幣';
+        unit   = '台幣';
       } else {
-        // 台幣 → 日幣
         result = amt / rate;
-        unit = '日幣';
+        unit   = '日幣';
       }
-
-      // 顯示「日幣XXX元」或「台幣XXX元」
       resEl.textContent = `${unit}${result.toFixed(2).toLocaleString()}元`;
     });
   </script>
