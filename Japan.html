@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href= "favicon.ico" type="image/x-icon">
+  <title>日幣 ⇄ 台幣 換算器</title>
+  <style>
+    body {
+      max-width: 400px;
+      margin: auto;
+      font-family: sans-serif;
+      padding: 1rem;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    #result {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<body bgcolor="#83b1c9">
+  <h2>日幣 ⇄ 台幣 換算器</h2>
+
+  <select id="mode">
+    <option value="j2t">日幣 → 台幣</option>
+    <option value="t2j">台幣 → 日幣</option>
+  </select>
+
+  <input type="text" id="amount" placeholder="輸入金額" />
+
+  <button id="btn">換算</button>
+  <h3>使用匯率：0.2292</h3>
+
+  <p id="result"></p>
+
+  <script>
+    const rate = 0.2292; // 1 JPY = 0.2292 TWD
+    const modeEl = document.getElementById('mode');
+    const amtEl  = document.getElementById('amount');
+    const resEl  = document.getElementById('result');
+
+    // 取得目前前綴文字：日幣 或 台幣
+    function getPrefix() {
+      return modeEl.value === 'j2t' ? '日幣' : '台幣';
+    }
+
+    // 當輸入框內容改變，就重寫 value，讓它永遠是「前綴＋純數字」
+    amtEl.addEventListener('input', () => {
+      const prefix = getPrefix();
+      // 從 value 裡面取出所有數字跟小數點
+      const digits = amtEl.value.replace(/[^0-9.]/g, '');
+      amtEl.value = prefix + digits;
+    });
+
+    // 當轉換模式改變時，清空輸入與結果，並更新前綴
+    modeEl.addEventListener('change', () => {
+      amtEl.value = '';
+      resEl.textContent = '';
+      amtEl.placeholder = '輸入金額';
+    });
+
+    document.getElementById('btn').addEventListener('click', () => {
+      const raw = amtEl.value.replace(/[^0-9.]/g, '');
+      const amt = parseFloat(raw);
+      if (isNaN(amt)) {
+        return alert('請輸入有效數字');
+      }
+
+      let result, unit;
+      if (modeEl.value === 'j2t') {
+        // 日幣 → 台幣
+        result = amt * rate;
+        unit = '台幣';
+      } else {
+        // 台幣 → 日幣
+        result = amt / rate;
+        unit = '日幣';
+      }
+
+      // 顯示「日幣XXX元」或「台幣XXX元」
+      resEl.textContent = `${unit}${result.toFixed(2).toLocaleString()}元`;
+    });
+  </script>
+</body>
+</html>
