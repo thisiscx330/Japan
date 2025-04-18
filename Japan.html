@@ -44,12 +44,7 @@
     }
     .rate-line input {
       width: 10ch;
-      padding: 0.5rem;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
-    /* 數字按鈕鍵盤 */
     .num-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -62,7 +57,6 @@
       background: #eee;
       border: 1px solid #ccc;
       border-radius: 4px;
-      color: #333;
       text-align: center;
     }
     .num-pad #clear-btn {
@@ -97,9 +91,8 @@
     <option value="t2j">台幣 → 日幣</option>
   </select>
 
-  <input type="text" id="amount" placeholder="" />
+  <input type="text" id="amount" placeholder="輸入日幣" />
 
-  <!-- 0–9 數字按鈕鍵盤，最下排改成 .  0  清除 -->
   <div class="num-pad">
     <button class="num-btn">1</button>
     <button class="num-btn">2</button>
@@ -120,55 +113,60 @@
   <p id="result"></p>
 
   <script>
+    const rateEl   = document.getElementById('rate');
     const modeEl   = document.getElementById('mode');
     const amtEl    = document.getElementById('amount');
-    const rateEl   = document.getElementById('rate');
     const resEl    = document.getElementById('result');
     const numBtns  = document.querySelectorAll('.num-btn');
     const clearBtn = document.getElementById('clear-btn');
 
-    function updatePlaceholder() {
-      amtEl.placeholder = modeEl.value === 'j2t' ? '輸入日幣' : '輸入台幣';
-    }
-    updatePlaceholder();
+    // 追蹤輸入框，預設為 amount
+    let focusedInput = amtEl;
+    amtEl.focus(); 
+
+    // 點擊欄位
+    rateEl.addEventListener('focus',  () => focusedInput = rateEl);
+    amtEl.addEventListener('focus',   () => focusedInput = amtEl);
+    
     modeEl.addEventListener('change', () => {
       amtEl.value = '';
       resEl.textContent = '';
-      updatePlaceholder();
+      amtEl.placeholder = modeEl.value === 'j2t' ? '輸入日幣' : '輸入台幣';
+      amtEl.focus();
+      focusedInput = amtEl;
     });
 
-    amtEl.addEventListener('input', () => {
-      const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
-      const digits = amtEl.value.replace(/[^0-9.]/g, '');
-      amtEl.value = prefix + digits;
-    });
-
+    // 數字小數點按鈕
     numBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const char = btn.textContent;
-        let raw = amtEl.value.replace(/[^0-9.]/g, '');
-        if (char === '.' && raw.includes('.')) return;
-        raw += char;
-        const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
-        amtEl.value = prefix + raw;
+        if (focusedInput === rateEl) {
+          // rate 直接拼字串
+          rateEl.value += char;
+        } else {
+          // amount 帶 prefix
+          let raw = amtEl.value.replace(/[^0-9.]/g, '');
+          if (char === '.' && raw.includes('.')) return;
+          raw += char;
+          const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
+          amtEl.value = prefix + raw;
+        }
       });
     });
-    
+
+    // 清除
     clearBtn.addEventListener('click', () => {
-      amtEl.value = '';
-      resEl.textContent = '';
+      focusedInput.value = '';
+      if (focusedInput === amtEl) resEl.textContent = '';
     });
 
+    // 換算
     document.getElementById('btn').addEventListener('click', () => {
       const rate = parseFloat(rateEl.value);
-      if (isNaN(rate) || rate <= 0) {
-        return alert('請輸入有效匯率');
-      }
+      if (isNaN(rate) || rate <= 0) return alert('請輸入有效匯率');
       const raw = amtEl.value.replace(/[^0-9.]/g, '');
       const amt = parseFloat(raw);
-      if (isNaN(amt)) {
-        return alert('請輸入有效金額');
-      }
+      if (isNaN(amt)) return alert('請輸入有效金額');
       let result, unit;
       if (modeEl.value === 'j2t') {
         result = amt * rate;
