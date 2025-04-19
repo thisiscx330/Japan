@@ -70,6 +70,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       text-align: center;
+      touch-action: manipulation;
     }
     .num-pad #clear-btn {
       padding: 0.75rem;
@@ -77,6 +78,7 @@
       background: #f66;
       color: #fff;
       text-align: center;
+      touch-action: manipulation;
     }
     #result {
       display: none;
@@ -153,7 +155,7 @@
   <p id="result"></p>
 
   <div id="common">
-    <h3>常用金額（以輸入匯率計算）</h3>
+    <h3>常用參考（以輸入匯率計算）</h3>
     <ul>
       <li>100 JPY = <span class="ref" data-value="100">--</span> TWD</li>
       <li>300 JPY = <span class="ref" data-value="300">--</span> TWD</li>
@@ -178,12 +180,11 @@
     let focusedInput = amtEl;
     amtEl.focus();
 
-    [rateEl, amtEl].forEach(i => {
-      i.addEventListener('focus', () => focusedInput = i);
-      i.addEventListener('click', () => focusedInput = i);
+    [rateEl, amtEl].forEach(input => {
+      input.addEventListener('focus', () => focusedInput = input);
+      input.addEventListener('click', () => focusedInput = input);
     });
 
-    // placeholder
     function updatePlaceholder() {
       amtEl.placeholder = modeEl.value === 'j2t' ? '輸入日幣' : '輸入台幣';
     }
@@ -200,7 +201,7 @@
     function updateCommon() {
       const rate = parseFloat(rateEl.value) || 0;
       refs.forEach(el => {
-        const v = +el.dataset.value;
+        const v = Number(el.dataset.value);
         el.textContent = rate > 0
           ? (v * rate).toFixed(2).toLocaleString()
           : '--';
@@ -211,8 +212,6 @@
 
     resetBtn.addEventListener('click', () => {
       rateEl.value = '0.2292';
-      rateEl.focus();
-      focusedInput = rateEl;
       updateCommon();
     });
 
@@ -224,10 +223,8 @@
       if (focusedInput === amtEl) {
         const prefix = modeEl.value === 'j2t' ? '日幣' : '台幣';
         amtEl.value = prefix + val;
-        amtEl.focus();
       } else {
         rateEl.value = val;
-        rateEl.focus();
         updateCommon();
       }
     }));
@@ -240,7 +237,6 @@
       } else {
         updateCommon();
       }
-      focusedInput.focus();
     });
 
     document.getElementById('btn').addEventListener('click', () => {
@@ -248,6 +244,7 @@
       if (isNaN(rate) || rate <= 0) {
         alert('請輸入有效匯率');
         rateEl.focus();
+        focusedInput = rateEl;
         return;
       }
       const raw = amtEl.value.replace(/[^0-9.]/g, '');
@@ -255,6 +252,7 @@
       if (isNaN(amt)) {
         alert('請輸入有效金額');
         amtEl.focus();
+        focusedInput = amtEl;
         return;
       }
       let result, unit;
